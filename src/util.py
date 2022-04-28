@@ -7,6 +7,7 @@ import os,sys
 import pandas
 import numpy
 from tqdm import tqdm
+import tensorflow as tf
 
 from math import ceil
 
@@ -109,9 +110,9 @@ class DataManager():
         '''
 
         print('Loading dataframe...')
-        
-        #self.__current_dataframe_of_pandas = pandas.concat([chunk for chunk in tqdm(pandas.read_csv(param_filepath_in, chunksize=1, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = '\t' , engine = 'c', nrows=1000), desc='Loading dataframe')])
-        self.__current_dataframe_of_pandas = pandas.read_csv( param_filepath_in, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = ' ' , engine = 'c', nrows=1000)
+        #self.__current_dataframe_of_pandas = tf.data.experimental.make_csv_dataset(param_filepath_in, self.__batch_size).as_dataframe
+        self.__current_dataframe_of_pandas = pandas.concat([chunk for chunk in tqdm(pandas.read_csv(param_filepath_in, chunksize=1, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = '\s+' , engine = 'c', nrows=10), desc='Loading dataframe')])
+        #self.__current_dataframe_of_pandas = pandas.read_csv( param_filepath_in, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = ' ' , engine = 'c', usecols=[0,1,2,3])
         print("Loaded dataframe.")
         # sys.exit(0)
         #self.__dataframe_of_pandas = pandas.read_csv( param_filepath_in, header = None, encoding = 'utf8',  sep = '\t' , engine = 'c') # you can use regular expression in sep by setting engine = 'python'
@@ -122,7 +123,8 @@ class DataManager():
         #currently every 9 lines describe a user
     
     def reshuffle_dataframe(self):
-        self.__current_dataframe_of_pandas.sample( frac=1 )
+        #self.__current_dataframe_of_pandas.sample( frac=1 )
+        pass
 
     def next_batch(self):
         '''

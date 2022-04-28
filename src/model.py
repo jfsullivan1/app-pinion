@@ -6,6 +6,27 @@ import tensorflow as tf
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Flatten, Reshape
 
+# Found at https://stackoverflow.com/questions/58464790/is-there-an-equivalent-function-of-pytorch-named-index-select-in-tensorflow
+def tf_index_select(input_, dim, indices):
+    """
+    input_(tensor): input tensor
+    dim(int): dimension
+    indices(list): selected indices list
+    """
+    shape = input_.get_shape().as_list()
+    if dim == -1:
+        dim = len(shape)-1
+    shape[dim] = 1
+
+    tmp = []
+    for idx in indices:
+        begin = [0]*len(shape)
+        begin[dim] = idx
+        tmp.append(tf.slice(input_, begin, shape))
+    res = tf.concat(tmp, axis=dim)
+
+    return res
+ 
 class TA_GRU(tf.keras.Model):
     def __init__(self):
         super().__init__()
@@ -25,8 +46,8 @@ class TA_GRU(tf.keras.Model):
         
 
         #self.ids_only_wordembed_dim = torch.autograd.Variable( torch.LongTensor( [ i for i in range( 0 , self.fix_sentence_length * self.word_embed_size ) ] ) ).cuda()
-        self.ids_only_wordembed_dim = tf.Variable( tf.cast([ i for i in range( 0 , self.fix_sentence_length * self.word_embed_size ) ], tf.int64 ))
-        self.ids_only_topic_embedding = tf.Variable( tf.cast([ i for i in range( self.fix_sentence_length * self.word_embed_size, self.fix_sentence_length * self.word_embed_size + self.topic_embedding_size) ], tf.int64))
+        self.ids_only_wordembed_dim = tf.cast([ i for i in range( 0 , self.fix_sentence_length * self.word_embed_size ) ], tf.int64 )
+        self.ids_only_topic_embedding = tf.cast([ i for i in range( self.fix_sentence_length * self.word_embed_size, self.fix_sentence_length * self.word_embed_size + self.topic_embedding_size) ], tf.int64)
         #self.ids_only_topic_embedding = torch.autograd.Variable( torch.LongTensor( [ i for i in range( self.fix_sentence_length * self.word_embed_size, self.fix_sentence_length * self.word_embed_size + self.topic_embed_size ) ] ) ).cuda()
 
 
@@ -52,11 +73,17 @@ class TA_GRU(tf.keras.Model):
         '''
         ( batch_size , user_tweet_count , neighbor_tweet_count_add_one , twitter_length_size_x_word_embed_add_topic_embed_size ) = inputs.shape
          # var_only_wordembed_dim = param_input.index_select( 3 , self.ids_only_wordembed_dim ) #var only has word embed line
-        var_only_wordembed_dim = tf.gather(inputs, self.ids_only_wordembed_dim, axis=3) #var only has word embed line
+        var_only_wordembed_dim = tf_index_select(inputs, 3, self.ids_only_wordembed_dim) #var only has word embed line
+
+        #var_only_wordembed_dim = var_only_wordembed_dim.view( batch_size, user_tweet_count, neighbor_tweet_count_add_one, self.fix_sentence_length, self.word_embed_size )
+        #var_only_wordembed_dim = var_only_wordembed_dim.view( -1, self.fix_sentence_length, self.word_embed_size )
+        var_only_wordembed_dim = tf.reshape(var_only_wordembed_dim, [batch_size, user_tweet_count, neighbor_tweet_count_add_one, self.fix_sentence_length, self.word_embed_size])
+        var_only_wordembed_dim = tf.reshape(var_only_wordembed_dim, [-1, self.fix_sentence_length, self.word_embed_size])
         var_only_wordembed_dim_permuted = tf.transpose(var_only_wordembed_dim, perm=[1, 0, 2])
         #var_rnn_tweet_output, (var_rnn_tweet_output_h, var_rnn_tweet_output_c) = self.rnn_tweet( var_only_wordembed_dim_permuted)
         #var_rnn_tweet_output = var_rnn_tweet_output.permute(1, 0, 2)
-        var_rnn_tweet_output, (var_rnn_tweet_output_h, var_rnn_tweet_output_c) = self.rnn_tweet( var_only_wordembed_dim_permuted)
+        var_rnn_tweet_output = self.rnn_tweet( var_only_wordembed_dim_permuted)
+        
         var_rnn_tweet_output = tf.transpose(var_rnn_tweet_output, perm=[1, 0, 2])
         var_twitter_embedded = tf.math.reduce_mean( var_rnn_tweet_output ) #default squeezed
         var_twitter_embedded = self.linear_tweet( var_twitter_embedded )
