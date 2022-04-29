@@ -49,9 +49,8 @@ class TA_GRU(tf.keras.Model):
         self.ids_only_wordembed_dim = tf.cast([ i for i in range( 0 , self.fix_sentence_length * self.word_embed_size ) ], tf.int64 )
         self.ids_only_topic_embedding = tf.cast([ i for i in range( self.fix_sentence_length * self.word_embed_size, self.fix_sentence_length * self.word_embed_size + self.topic_embedding_size) ], tf.int64)
         #self.ids_only_topic_embedding = torch.autograd.Variable( torch.LongTensor( [ i for i in range( self.fix_sentence_length * self.word_embed_size, self.fix_sentence_length * self.word_embed_size + self.topic_embed_size ) ] ) ).cuda()
-
-
-        self.rnn_tweet = tf.keras.layers.LSTM( self.rnn_tweet_hidden_size, input_shape = [self.word_embed_size] )
+        self.ids_seq_last = tf.cast( [ self.user_self_tweets -1 ], tf.int64)
+        self.rnn_tweet = tf.keras.layers.LSTM( self.rnn_tweet_hidden_size, input_shape = [self.word_embed_size], return_sequences=True)
         
         
         self.linear_tweet = tf.keras.layers.Dense(self.word_embed_size, 
@@ -63,7 +62,7 @@ class TA_GRU(tf.keras.Model):
         self.A_tweets = tf.Variable(tf.random.normal([(self.neighbor_tweets + 1)], stddev=0.1))
         self.B_tweets = tf.Variable(tf.random.normal([1], stddev=0.1))
 
-        self.rnn = tf.keras.layers.GRU(self.rnn_hidden_size, input_shape=[(self.word_embed_size+self.topic_embedding_size)])
+        self.rnn = tf.keras.layers.GRU(self.rnn_hidden_size, input_shape=[(self.word_embed_size+self.topic_embedding_size)], return_sequences=True)
         self.linear = tf.keras.layers.Dense(self.class_count, input_shape=[self.rnn_hidden_size])
         # self.logsoftmax = torch.nn.LogSoftmax( dim = 1) # dim= 0 means sum( a[i][1][3]) = 1
 
@@ -84,14 +83,17 @@ class TA_GRU(tf.keras.Model):
         #var_rnn_tweet_output = var_rnn_tweet_output.permute(1, 0, 2)
         var_rnn_tweet_output = self.rnn_tweet( var_only_wordembed_dim_permuted)
         
+        # var_twitter_embedded = torch.mean( var_rnn_tweet_output, dim=1 ) #default squeezed
+        # var_twitter_embedded = self.linear_tweet( var_twitter_embedded )
+        # var_twitter_embedded = var_twitter_embedded.view(batch_size, self.user_self_tweets, neighbor_tweet_count_add_one, self.word_embed_size )
         var_rnn_tweet_output = tf.transpose(var_rnn_tweet_output, perm=[1, 0, 2])
-        var_twitter_embedded = tf.math.reduce_mean( var_rnn_tweet_output ) #default squeezed
+        var_twitter_embedded = tf.math.reduce_mean( var_rnn_tweet_output, axis=1 ) #default squeezed
         var_twitter_embedded = self.linear_tweet( var_twitter_embedded )
 
        
 
         # var_only_topic_embedding = param_input.index_select( 3, self.ids_only_topic_embedding )
-        var_only_topic_embedding = tf.gather(inputs, self.ids_only_topic_embedding, axis=3)
+        var_only_topic_embedding = tf_index_select(inputs, 3, self.ids_only_topic_embedding)
     
         # var_only_wordembed_dim = var_only_wordembed_dim.view( batch_size, user_tweet_count, neighbor_tweet_count_add_one, self.fix_sentence_length, self.word_embed_size )
         var_only_wordembed_dim = tf.reshape(var_only_wordembed_dim, [batch_size, user_tweet_count, neighbor_tweet_count_add_one, self.fix_sentence_length, self.word_embed_size])
@@ -100,16 +102,16 @@ class TA_GRU(tf.keras.Model):
         var_only_wordembed_dim = tf.reshape(var_only_wordembed_dim, [-1, self.fix_sentence_length, self.word_embed_size])
 
         # var_only_wordembed_dim_permuted = var_only_wordembed_dim.permute( 1, 0, 2 ) #transpose
-        var_only_wordembed_dim_permuted = tf.transpose(var_only_wordembed_dim, perm=[(1, 0, 2)]) #transpose (permute in torch)
+        var_only_wordembed_dim_permuted = tf.transpose(var_only_wordembed_dim, perm=[1, 0, 2]) #transpose (permute in torch)
         
         # var_rnn_tweet_output, (var_rnn_tweet_output_h, var_rnn_tweet_output_c) = self.rnn_tweet( var_only_wordembed_dim_permuted)
-        var_rnn_tweet_output, (var_rnn_tweet_output_h, var_rnn_tweet_output_c) = self.rnn_tweet( var_only_wordembed_dim_permuted)
+        var_rnn_tweet_output = self.rnn_tweet( var_only_wordembed_dim_permuted)
 
         # var_rnn_tweet_output = var_rnn_tweet_output.permute(1, 0, 2)  
-        var_rnn_tweet_output = tf.transpose(var_rnn_tweet_output, perm=[(1, 0, 2)]) #transpose in tensorflow
+        var_rnn_tweet_output = tf.transpose(var_rnn_tweet_output, perm=[1, 0, 2]) #transpose in tensorflow
         
         # var_twitter_embedded = torch.mean( var_rnn_tweet_output, dim=1 ) #default squeezed
-        var_twitter_embedded = tf.math.reduce_mean( var_rnn_tweet_output ) #default squeezed
+        var_twitter_embedded = tf.math.reduce_mean( var_rnn_tweet_output, axis=1 ) #default squeezed
         # Using original line
         var_twitter_embedded = self.linear_tweet( var_twitter_embedded )
         # var_twitter_embedded = var_twitter_embedded.view(batch_size, self.user_self_tweets, neighbor_tweet_count_add_one, self.word_embed_size )
@@ -127,7 +129,7 @@ class TA_GRU(tf.keras.Model):
         #==========The original for tweet attention
 
         #var_twitter_and_topic_embedded = var_twitter_and_topic_embedded.permute( 0, 1, 3, 2 )
-        var_twitter_and_topic_embedded = tf.transpose(var_twitter_and_topic_embedded, perm=[(0, 1, 3, 2)])
+        var_twitter_and_topic_embedded = tf.transpose(var_twitter_and_topic_embedded, perm=[0, 1, 3, 2])
 
         # var_user_tweet_context = torch.mv( var_twitter_and_topic_embedded.contiguous().view(-1 , self.neighbor_tweets + 1) , self.A_tweets) + self.B_tweets.expand( batch_size, user_tweet_count, self.word_embed_size + self.topic_embed_size ).contiguous().view(-1)
         var_user_tweet_context = tf.linalg.matvec(tf.reshape(var_twitter_and_topic_embedded, [-1, self.neighbor_tweets + 1]), self.A_tweets) + tf.reshape(tf.broadcast_to(self.B_tweets, [batch_size, user_tweet_count, self.word_embed_size + self.topic_embedding_size]), [-1])
@@ -142,7 +144,7 @@ class TA_GRU(tf.keras.Model):
         var_user = tf.transpose(var_user, perm=[1 , 0 , 2])
         
         # Using original line
-        var_rnn_output , var_rnn_output_h  = self.rnn( var_user , None ) # None means that h_0 = 0
+        var_rnn_output = self.rnn( var_user ) # None means that h_0 = 0
         
         # var_rnn_output = var_rnn_output.permute( 1 , 0 , 2 )
         var_rnn_output = tf.transpose(var_rnn_output, perm=[1, 0, 2])
@@ -151,7 +153,7 @@ class TA_GRU(tf.keras.Model):
 
         
         # var_seq_last = var_rnn_output.index_select( 1 , self.ids_seq_last )
-        var_seq_last = tf.gather(var_rnn_output, self.ids_seq_last, axis=1)
+        var_seq_last = tf_index_select(var_rnn_output, 1, self.ids_seq_last)
         
         # var_seq_last = var_seq_last.squeeze()
         var_seq_last = tf.squeeze(var_seq_last)
