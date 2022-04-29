@@ -35,7 +35,7 @@ def train(batch_size):
                 loss = criterion( logits , y )
             
             print("Loss: ", loss)
-            gradient = tape.gradient(tf.cast(loss, tf.float64), model.trainable_variables)
+            gradient = tape.gradient(loss, model.trainable_variables)
 
             optimizer.apply_gradients(zip(gradient, model.trainable_variables))
             # loss.backward()
@@ -93,9 +93,9 @@ def eval(model, data_manager, criterion):
     loss_meter = tf.keras.metrics.Mean()
     for i,(x,y) in enumerate(data_manager.next_batch()):
         #x=Variable(torch.from_numpy(x).float(logger),volatile=True)
-        x = tf.Variable(tf.convert_to_tensor(x), dtype=tf.float32, volatile=True)
+        x = tf.Variable(tf.convert_to_tensor(x), dtype=tf.float32)
         # y=Variable(torch.LongTensor(y),volatile=True)
-        y = tf.Variable(tf.cast(y, tf.int64), dtype=tf.int64, volatile=True)
+        y = tf.Variable(y, dtype=tf.int64)
         loss,scores,corrects=eval_batch(model,x,y,criterion)
         loss_meter.add(loss.data[0])
         confusion_matrix.add(scores.data,y.data)
