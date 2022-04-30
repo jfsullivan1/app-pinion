@@ -6,6 +6,8 @@ import tensorflow as tf
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Flatten, Reshape
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 # Found at https://stackoverflow.com/questions/58464790/is-there-an-equivalent-function-of-pytorch-named-index-select-in-tensorflow
 def tf_index_select(input_, dim, indices):
     """
@@ -162,6 +164,6 @@ class TA_GRU(tf.keras.Model):
         var_linear_output = self.linear(var_seq_last)
 
         # Using original line
-        var_logsoftmax_output = tf.nn.log_softmax( var_linear_output )
+        var_logsoftmax_output = tf.nn.log_softmax( var_linear_output, axis=1 )
 
         return var_logsoftmax_output

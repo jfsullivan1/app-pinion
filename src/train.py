@@ -23,8 +23,10 @@ def train(batch_size):
     for epoch in range(epochs):
         data_manager.reshuffle_dataframe()
         n_batch = data_manager.n_batches()
-        batch_index = 0
-        for batch_index in range(n_batch - 1):
+        print(n_batch)
+        for batch_index in range(n_batch):
+            print("Batch index", batch_index)
+            print("n_batch - 1", n_batch - 1)
             ( x , y ) = data_manager.next_batch()
             x = tf.Variable(x, dtype=tf.float32)
             y = tf.Variable(y, dtype=tf.float32)
@@ -34,7 +36,6 @@ def train(batch_size):
                 scores, corrects = eval_batch( logits, x, y, criterion, batch_size)
                 loss = criterion( logits , y )
             
-            print("Loss: ", loss)
             gradient = tape.gradient(loss, model.trainable_variables)
 
             optimizer.apply_gradients(zip(gradient, model.trainable_variables))
@@ -42,8 +43,9 @@ def train(batch_size):
             # optimizer.step()
             if ( batch_index + 1 ) % 5 == 0:
                 tf.cast(corrects, tf.float32)
-                accuracy = 1.0 * corrects / batch_size
+                accuracy = 1 * corrects[0].shape[0] / batch_size
                 print("EPOCH %d\tBATCH%d\tACCURACY:%f\tLOSS:%f" % (epoch, batch_index, accuracy, loss))
+                data_manager.set_current_cursor_in_dataframe_zero()
             
 
 def eval_batch(logits,x,y,criterion, batch_size):
@@ -62,9 +64,12 @@ def eval_batch(logits,x,y,criterion, batch_size):
 
      # CrossEntropyLoss takes in a vector and a class num ( usually a index num of the vector )
     
+    # print("Logits:", logits)
+    # print("Labels:", y)
+
     its = tf.exp( logits )
     predition_its = tf.math.reduce_sum( tf.reshape(its, [batch_size, TOPIC_SENTIMENT_COUNT, SENTIMENT_COUNT]), axis = 1)
-    model_training_predicts = tf.reduce_max(predition_its, axis = 1)[1]
+    model_training_predicts = tf.math.argmax(predition_its, axis = 1)
     # model_training_predicts = torch.max( predition_its, 1)[ 1 ]
     # model_training_predicts = torch.max( logits , 1)[ 1 ] # [0] : max value of dim 1 [1]: max index of dim 1 LongTensor
     
@@ -74,9 +79,13 @@ def eval_batch(logits,x,y,criterion, batch_size):
     # predition_y = torch.sum( y.view( batch_size, TOPIC_SENTIMENT_COUNT, SENTIMENT_COUNT ), dim = 1, keepdim = False )
     predition_y = tf.math.reduce_sum( tf.reshape(y, [batch_size, TOPIC_SENTIMENT_COUNT, SENTIMENT_COUNT]), axis = 1 )
     # y_predicts = torch.max( predition_y, 1)[ 1 ] # the index instead of the value
-    y_predicts = tf.math.reduce_max(predition_y, axis = 1)[1]
-
-    corrects = tf.math.count_nonzero( model_training_predicts == y_predicts )
+    y_predicts = tf.math.argmax(predition_y, axis = 1)
+    
+    print("Model Train P",model_training_predicts)
+    print("Y Pred", y_predicts)
+    print("Equals pred", model_training_predicts == y_predicts)
+    corrects = np.nonzero( model_training_predicts == y_predicts )
+    print("Corrects", corrects)
     
     return its , corrects
 

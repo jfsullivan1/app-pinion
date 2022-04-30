@@ -28,7 +28,7 @@ TOPIC_EMBEDDING_DIMENSION = 10
 TWITTER_LENGTH = 24 #universal twitter length for each twitter, must set before run
 USER_SELF_TWEETS = 3 #a user's previous tweet nums, must set before run
 NEIGHBOR_TWEETS = 5 #neighbors' previous tweet nums, must set before run
-TRAINING_INSTANCES = 10880
+TRAINING_INSTANCES = 10
 TESTING_INSTANCES = 10965
 
 # CLASS_COUNT = 3 # number of classes for classification  
@@ -139,7 +139,8 @@ class DataManager():
 
         s = self.__current_cursor_in_dataframe #start cursor
         t = s + batch_size #end cursor
-
+        print("S value: ", s)
+        print("T value: ", t)
         #dataframe_of_pandas = pandas.DataFrame( data= self.__chunks_of_pandas.get_chunk( chunk_size), dtype= numpy.float32) #get the current chunk, chunk is a default dataframe, should be transformed to float32, or the dataformat will not be the same
 
         batch_index = s // batch_size
@@ -161,6 +162,9 @@ class DataManager():
             #batch_x[ user_i%batch_size] = dataframe_of_pandas.iloc[ user_i% batch_size][ label_shift: ].values.reshape( ( 1+USER_TWITTER_COUNT+NEIGHBOR_TWITTER_COUNT, 1+USER_TWITTER_COUNT+NEIGHBOR_TWITTER_COUNT, TWITTER_LENGTH, WORD_EMBEDDING_DIMENSION) )
 
             # dataframe_of_pandas infact is a dataframe of a chunk_size
+            # print(user_i)
+            # print(self.__current_dataframe_of_pandas.iloc[ user_i])
+            # print(self.__current_dataframe_of_pandas.iloc[ user_i][ label_shift: ])
             batch_x[ user_i%batch_size] = self.__current_dataframe_of_pandas.iloc[ user_i][ label_shift: ].values.reshape( ( USER_SELF_TWEETS, NEIGHBOR_TWEETS+1, TWITTER_LENGTH * WORD_EMBEDDING_DIMENSION + TOPIC_EMBEDDING_DIMENSION ) )
             batch_y[ user_i%batch_size] = self.__current_dataframe_of_pandas.iloc[ user_i][ 0: label_shift] #iloc is absolute shift, loc is access by row name. if header==None, then the row name is the int index, which is inherented by splitted chunks
             #print(batch_x.shape)
