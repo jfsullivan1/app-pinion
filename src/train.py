@@ -10,6 +10,13 @@ from model import *
 #TODO: import tensorflow equivalent of torchnet meter
 
 def train(batch_size):
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    try:
+        tf.config.experimental.set_memory_growth(gpus[0], True)
+        tf.config.experimental.set_memory_growth(gpus[1], True)
+    except:
+        # Invalid device or cannot modify virtual devices once initialized.
+        pass
     model = TA_GRU()
     data_manager = DataManager(batch_size, TRAINING_INSTANCES)
     data_manager.load_dataframe_from_file( TRAIN_SET_PATH )
@@ -23,6 +30,7 @@ def train(batch_size):
     for epoch in range(epochs):
         data_manager.reshuffle_dataframe()
         n_batch = data_manager.n_batches()
+        
         print(n_batch)
         for batch_index in range(n_batch):
             print("Batch index", batch_index)
@@ -36,15 +44,17 @@ def train(batch_size):
                 scores, corrects = eval_batch( logits, x, y, criterion, batch_size)
                 loss = criterion( logits , y )
             
+            loss = tf.cast(loss, tf.float32)
             gradient = tape.gradient(loss, model.trainable_variables)
-
+            
             optimizer.apply_gradients(zip(gradient, model.trainable_variables))
             # loss.backward()
             # optimizer.step()
-            if ( batch_index + 1 ) % 5 == 0:
-                tf.cast(corrects, tf.float32)
-                accuracy = 1 * corrects[0].shape[0] / batch_size
-                print("EPOCH %d\tBATCH%d\tACCURACY:%f\tLOSS:%f" % (epoch, batch_index, accuracy, loss))
+            tf.cast(corrects, tf.float32)
+            accuracy = 1 * corrects[0].shape[0] / batch_size
+            print("EPOCH %d\tBATCH%d\tACCURACY:%f\tLOSS:%f" % (epoch, batch_index, accuracy, loss))
+            if ( batch_index + 1 ) % 200 == 0:
+                
                 data_manager.set_current_cursor_in_dataframe_zero()
             
 
@@ -104,7 +114,7 @@ def eval(model, data_manager, criterion):
         #x=Variable(torch.from_numpy(x).float(logger),volatile=True)
         x = tf.Variable(tf.convert_to_tensor(x), dtype=tf.float32)
         # y=Variable(torch.LongTensor(y),volatile=True)
-        y = tf.Variable(y, dtype=tf.int64)
+        y = tf.Variable(y, dtype=tf.float32)
         loss,scores,corrects=eval_batch(model,x,y,criterion)
         loss_meter.add(loss.data[0])
         confusion_matrix.add(scores.data,y.data)

@@ -23,7 +23,7 @@ def tf_index_select(input_, dim, indices):
     tmp = []
     for idx in tf.unstack(indices):
         begin = [0]*len(shape)
-        begin[dim] = idx
+        begin[dim] = tf.cast(idx, tf.int32)
         tmp.append(tf.slice(input_, begin, shape))
     res = tf.concat(tmp, axis=dim)
 
@@ -48,11 +48,15 @@ class TA_GRU(tf.keras.Model):
         
 
         #self.ids_only_wordembed_dim = torch.autograd.Variable( torch.LongTensor( [ i for i in range( 0 , self.fix_sentence_length * self.word_embed_size ) ] ) ).cuda()
-        self.ids_only_wordembed_dim = tf.Variable([ i for i in range( 0 , self.fix_sentence_length * self.word_embed_size ) ])
-        self.ids_only_topic_embedding = tf.Variable([ i for i in range( self.fix_sentence_length * self.word_embed_size, self.fix_sentence_length * self.word_embed_size + self.topic_embedding_size) ])
+        self.ids_only_wordembed_dim = tf.Variable([ i for i in range( 0 , self.fix_sentence_length * self.word_embed_size ) ], dtype=tf.float32)
+        self.ids_only_topic_embedding = tf.Variable([ i for i in range( self.fix_sentence_length * self.word_embed_size, self.fix_sentence_length * self.word_embed_size + self.topic_embedding_size) ],  dtype=tf.float32)
         #self.ids_only_topic_embedding = torch.autograd.Variable( torch.LongTensor( [ i for i in range( self.fix_sentence_length * self.word_embed_size, self.fix_sentence_length * self.word_embed_size + self.topic_embed_size ) ] ) ).cuda()
-        self.ids_seq_last = tf.Variable( [ self.user_self_tweets -1 ])
+        self.ids_seq_last = tf.Variable( [ self.user_self_tweets -1 ], dtype=tf.float32)
         self.rnn_tweet = tf.keras.layers.LSTM( self.rnn_tweet_hidden_size, input_shape = [self.word_embed_size], return_sequences=True)
+
+        print(self.ids_only_wordembed_dim)
+        print(self.ids_only_topic_embedding)
+        print(self.ids_seq_last)
         
         
         self.linear_tweet = tf.keras.layers.Dense(self.word_embed_size, 
