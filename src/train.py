@@ -10,13 +10,6 @@ from model import *
 #TODO: import tensorflow equivalent of torchnet meter
 
 def train(batch_size):
-    gpus = tf.config.experimental.list_physical_devices('GPU')
-    try:
-        tf.config.experimental.set_memory_growth(gpus[0], True)
-        tf.config.experimental.set_memory_growth(gpus[1], True)
-    except:
-        # Invalid device or cannot modify virtual devices once initialized.
-        pass
     model = TA_GRU()
     data_manager = DataManager(batch_size, TRAINING_INSTANCES)
     data_manager.load_dataframe_from_file( TRAIN_SET_PATH )
@@ -56,7 +49,8 @@ def train(batch_size):
             if ( batch_index + 1 ) % 200 == 0:
                 
                 data_manager.set_current_cursor_in_dataframe_zero()
-            
+
+    model.save('theModelTrainedOnEmb8.h5')
 
 def eval_batch(logits,x,y,criterion, batch_size):
     '''
@@ -104,7 +98,7 @@ def eval(model, data_manager, criterion):
     evaluate the accuracy of all epochs
     currently unused, a good example
     '''
-    model.eval()#Sets the module in evaluation mode. refer to the pytorch nn manual
+    #model.eval()#Sets the module in evaluation mode. refer to the pytorch nn manual
     #confusion_matrix=meter.ConfusionMeter(CLASS_COUNT)
     # NOTE: meter is a pytorch module
     confusion_matrix = tf.keras.metrics.ConfusionMatrix(SENTIMENT_COUNT)

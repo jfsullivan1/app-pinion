@@ -11,13 +11,13 @@ import pickle
 
 def pickle_dataframes():
     if not os.path.exists("embedding_8.pkl"):
-        df = pandas.concat([chunk for chunk in tqdm(pandas.read_csv('../BrexitDataset/BrexitTweets.snstrain_08.wordembbed.csv', chunksize=1, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = '\s+' , engine = 'c'), desc='Loading dataframe')])
+        df = pandas.concat([chunk for chunk in tqdm(pandas.read_csv('../../BrexitDataset/BrexitTweets.snstrain_08.wordembbed.csv', chunksize=1, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = '\s+' , engine = 'c'), desc='Loading dataframe')])
         df.to_pickle("embedding_8.pkl")
     if not os.path.exists("embedding_7.pkl"):
-        df = pandas.concat([chunk for chunk in tqdm(pandas.read_csv('../BrexitDataset/BrexitTweets.snstrain_07.wordembbed.csv', chunksize=1, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = '\s+' , engine = 'c'), desc='Loading dataframe')])
+        df = pandas.concat([chunk for chunk in tqdm(pandas.read_csv('../../BrexitDataset/BrexitTweets.snstrain_07.wordembbed.csv', chunksize=1, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = '\s+' , engine = 'c'), desc='Loading dataframe')])
         df.to_pickle("embedding_7.pkl")
     if not os.path.exists("embedding_0.pkl"):
-        df = pandas.concat([chunk for chunk in tqdm(pandas.read_csv('../BrexitDataset/BrexitTweets.snstrain_00.wordembbed.csv', chunksize=1, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = '\s+' , engine = 'c'), desc='Loading dataframe')])
+        df = pandas.concat([chunk for chunk in tqdm(pandas.read_csv('../../BrexitDataset/BrexitTweets.snstrain_00.wordembbed.csv', chunksize=1, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = '\s+' , engine = 'c'), desc='Loading dataframe')])
         df.to_pickle("embedding_0.pkl")
 
 pickle_dataframes()
