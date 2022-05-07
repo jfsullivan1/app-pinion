@@ -10,7 +10,8 @@ from model import *
 
 
 def main():
-    train(2)
-    
+    train(10)
+
+
 if __name__ == "__main__":
     main()
