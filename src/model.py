@@ -54,9 +54,9 @@ class TA_GRU(tf.keras.Model):
 
         #self.ids_only_wordembed_dim = torch.autograd.Variable( torch.LongTensor( [ i for i in range( 0 , self.fix_sentence_length * self.word_embed_size ) ] ) ).cuda()
         self.ids_only_wordembed_dim = tf.Variable([i for i in range(
-            0, self.fix_sentence_length * self.word_embed_size)], dtype=tf.float32)
+            0, self.fix_sentence_length * self.word_embed_size)], dtype=tf.int32)
         self.ids_only_topic_embedding = tf.Variable([i for i in range(
-            self.fix_sentence_length * self.word_embed_size, self.fix_sentence_length * self.word_embed_size + self.topic_embedding_size)],  dtype=tf.float32)
+            self.fix_sentence_length * self.word_embed_size, self.fix_sentence_length * self.word_embed_size + self.topic_embedding_size)],  dtype=tf.int32)
         #self.ids_only_topic_embedding = torch.autograd.Variable( torch.LongTensor( [ i for i in range( self.fix_sentence_length * self.word_embed_size, self.fix_sentence_length * self.word_embed_size + self.topic_embed_size ) ] ) ).cuda()
         self.ids_seq_last = tf.Variable(
             [self.user_self_tweets - 1], dtype=tf.float32)
@@ -92,7 +92,7 @@ class TA_GRU(tf.keras.Model):
          twitter_length_size_x_word_embed_add_topic_embed_size) = inputs.shape
         # var_only_wordembed_dim = param_input.index_select( 3 , self.ids_only_wordembed_dim ) #var only has word embed line
         var_only_wordembed_dim = tf.gather(
-            inputs, axis=3, indices=np.asarray(self.ids_only_wordembed_dim, dtype=np.int32))  # var only has word embed line
+            inputs, axis=3, indices=self.ids_only_wordembed_dim)  # var only has word embed line
 
         #var_only_wordembed_dim = var_only_wordembed_dim.view( batch_size, user_tweet_count, neighbor_tweet_count_add_one, self.fix_sentence_length, self.word_embed_size )
         #var_only_wordembed_dim = var_only_wordembed_dim.view( -1, self.fix_sentence_length, self.word_embed_size )
@@ -117,7 +117,7 @@ class TA_GRU(tf.keras.Model):
 
         # var_only_topic_embedding = param_input.index_select( 3, self.ids_only_topic_embedding )
         var_only_topic_embedding = tf.gather(
-            inputs, axis=3, indices=np.asarray(self.ids_only_topic_embedding, dtype=np.int32))
+            inputs, axis=3, indices=self.ids_only_topic_embedding)
         # var_only_topic_embedding = tf_index_select(
         #     inputs, 3, self.ids_only_topic_embedding)
 

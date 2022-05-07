@@ -13,8 +13,6 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-import tensorflow_cloud as tfc
-import tensorflow_datasets as tfds
 
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -32,20 +30,19 @@ def train(batch_size):
     #     # Invalid device or cannot modify virtual devices once initialized.
     #     pass
     model = TA_GRU()
-    data_manager = DataManager(batch_size, TRAINING_INSTANCES)
-    data_manager.load_dataframe_from_file(TRAIN_SET_PATH)
     learning_rate = tf.keras.optimizers.schedules.ExponentialDecay(
         initial_learning_rate=0.0005, decay_rate=0.9, decay_steps=1000000)
     optimizer = Adam(learning_rate)
     criterion = tf.keras.losses.KLDivergence()
-    n_batch = data_manager.n_batches()
     res = []
     epochs = 100
     epoch_accuracies = []
     epoch_losses = []
     for epoch in range(epochs):
-        data_manager.reshuffle_dataframe()
+        data_manager = DataManager(batch_size, TRAINING_INSTANCES)
+        data_manager.load_dataframe_from_file(TRAIN_SET_PATH)
         n_batch = data_manager.n_batches()
+        data_manager.reshuffle_dataframe()
         batch_accuracies = []
         batch_losses = []
         print(n_batch)
@@ -72,8 +69,6 @@ def train(batch_size):
             accuracy = 1 * corrects[0].shape[0] / batch_size
             batch_accuracies.append(accuracy)
             batch_losses.append(loss)
-            print("Batch Accuracies", batch_accuracies)
-            print("Batch Losses", batch_losses)
             print("EPOCH ACCURACIES", epoch_accuracies)
             print("EPOCH LOSSES", epoch_losses)
             print("EPOCH %d\tBATCH%d\tACCURACY:%f\tLOSS:%f" %
@@ -83,6 +78,7 @@ def train(batch_size):
                 data_manager.set_current_cursor_in_dataframe_zero()
         epoch_accuracies.append(tf.reduce_mean(batch_accuracies))
         epoch_losses.append(tf.reduce_mean(batch_losses))
+        model.save_weights("model_weights")
 
 
 def eval_batch(logits, x, y, criterion, batch_size):
