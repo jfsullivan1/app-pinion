@@ -168,6 +168,6 @@ class TA_GRU(tf.keras.Model):
         var_linear_output = self.linear(var_seq_last)
 
         # Using original line
-        var_logsoftmax_output = tf.nn.log_softmax( var_linear_output, axis=1 )
+        var_logsoftmax_output = tf.nn.softmax( var_linear_output, axis=1 )
 
         return var_logsoftmax_output

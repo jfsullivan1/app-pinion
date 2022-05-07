@@ -9,25 +9,14 @@ import numpy
 from tqdm import tqdm
 import tensorflow as tf
 import dask.dataframe as dd
-import pickle
+import pickle5 as pickle
 
 from math import ceil
-
-use_gpu = True
-if not use_gpu:
-    tf.config.set_visible_devices([], 'GPU')
-else:
-    gpus = tf.config.list_physical_devices('GPU')
-    if gpus:
-        tf.config.set_visible_devices(gpus[0], 'GPU')
-        for gpu in gpus:
-            tf.config.experimental.set_memory_growth(gpu, True)
-
 
 #ROOT_DIR = '.' #the root path, currently is the code execution path
 ROOT_DIR = ''
 
-TRAIN_SET_PATH = '%s../BrexitDataset/BrexitTweets.snstrain_08.wordembbed.csv'%ROOT_DIR
+TRAIN_SET_PATH = 'embedding_8.pkl'
 TEST_SET_PATH = '%s../BrexitDataset/BrexitTweets.snstrain_00.wordembbed.csv'%ROOT_DIR
 
 SAVE_DIR = '%s/save'%ROOT_DIR
@@ -41,7 +30,7 @@ TOPIC_EMBEDDING_DIMENSION = 10
 TWITTER_LENGTH = 24 #universal twitter length for each twitter, must set before run
 USER_SELF_TWEETS = 3 #a user's previous tweet nums, must set before run
 NEIGHBOR_TWEETS = 5 #neighbors' previous tweet nums, must set before run
-TRAINING_INSTANCES = 200
+TRAINING_INSTANCES = 10000
 TESTING_INSTANCES = 10965
 
 # CLASS_COUNT = 3 # number of classes for classification  
@@ -124,8 +113,7 @@ class DataManager():
 
         print('Loading dataframe...')
         #self.__current_dataframe_of_pandas = tf.data.experimental.make_csv_dataset(param_filepath_in, self.__batch_size).as_dataframe
-   
-        self.__current_dataframe_of_pandas = pandas.read_pickle("embedding_7.pkl")
+        self.__current_dataframe_of_pandas = pandas.read_pickle("embedding_new.pkl") 
         print(self.__current_dataframe_of_pandas.shape)
 
         #self.__current_dataframe_of_pandas = pandas.read_csv( param_filepath_in, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = ' ' , engine = 'c', usecols=[0,1,2,3])

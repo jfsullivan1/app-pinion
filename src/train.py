@@ -10,47 +10,71 @@ from model import *
 #TODO: import tensorflow equivalent of torchnet meter
 
 def train(batch_size):
+    # gpus = tf.config.experimental.list_physical_devices('GPU')
+    # try:
+    #     tf.config.experimental.set_memory_growth(gpus[0], True)
+    #     tf.config.experimental.set_memory_growth(gpus[1], True)
+    # except:
+    #     # Invalid device or cannot modify virtual devices once initialized.
+    #     pass
     model = TA_GRU()
     data_manager = DataManager(batch_size, TRAINING_INSTANCES)
-    data_manager.load_dataframe_from_file( TRAIN_SET_PATH )
-    optimizer = Adam(learning_rate=0.0005)
+    data_manager.load_dataframe_from_file(TRAIN_SET_PATH)
+    learning_rate = tf.keras.optimizers.schedules.ExponentialDecay(
+        initial_learning_rate=0.0005, decay_rate=0.9, decay_steps=1000000)
+    optimizer = Adam(learning_rate)
     criterion = tf.keras.losses.KLDivergence()
     n_batch = data_manager.n_batches()
-    res=[]
+    res = []
     epochs = 100
-    
-    
+    epoch_accuracies = []
+    epoch_losses = []
     for epoch in range(epochs):
         data_manager.reshuffle_dataframe()
         n_batch = data_manager.n_batches()
-        
+        batch_accuracies = []
+        batch_losses = []
         print(n_batch)
         for batch_index in range(n_batch):
             print("Batch index", batch_index)
             print("n_batch - 1", n_batch - 1)
-            ( x , y ) = data_manager.next_batch()
+            (x, y) = data_manager.next_batch()
             x = tf.Variable(x, dtype=tf.float32)
             y = tf.Variable(y, dtype=tf.float32)
-           
+
             with tf.GradientTape() as tape:
                 logits = model(x)
-                scores, corrects = eval_batch( logits, x, y, criterion, batch_size)
-                loss = criterion( logits , y )
-            
+                scores, corrects = eval_batch(
+                    logits, x, y, criterion, batch_size)
+                loss = criterion(logits, y)
+
             loss = tf.cast(loss, tf.float32)
-            gradient = tape.gradient(loss, model.trainable_variables)
-            
-            optimizer.apply_gradients(zip(gradient, model.trainable_variables))
+            cpu = tf.config.list_physical_devices('CPU')[0]
+            with tf.device("/device:CPU:0"):
+                gradient = tape.gradient(loss, model.trainable_variables)
+                optimizer.apply_gradients(zip(gradient, model.trainable_variables))
             # loss.backward()
             # optimizer.step()
             tf.cast(corrects, tf.float32)
             accuracy = 1 * corrects[0].shape[0] / batch_size
-            print("EPOCH %d\tBATCH%d\tACCURACY:%f\tLOSS:%f" % (epoch, batch_index, accuracy, loss))
-            if ( batch_index + 1 ) % 200 == 0:
-                
+            batch_accuracies.append(accuracy)
+            batch_losses.append(loss)
+            print("Batch Accuracies", batch_accuracies)
+            print("Batch Losses", batch_losses)
+            print("EPOCH ACCURACIES", epoch_accuracies)
+            print("EPOCH LOSSES", epoch_losses)
+            print("EPOCH %d\tBATCH%d\tACCURACY:%f\tLOSS:%f" %
+                  (epoch, batch_index, accuracy, loss))
+            if (batch_index + 1) % 200 == 0:
+
                 data_manager.set_current_cursor_in_dataframe_zero()
+<<<<<<< HEAD
 
     model.save('theModelTrainedOnEmb8.h5')
+=======
+        epoch_accuracies.append(tf.reduce_mean(batch_accuracies))
+        epoch_losses.append(tf.reduce_mean(batch_losses))           
+>>>>>>> 9a90b16d798a16feaa892938e9b236c85283867b
 
 def eval_batch(logits,x,y,criterion, batch_size):
     '''
