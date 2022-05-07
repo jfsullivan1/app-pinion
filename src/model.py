@@ -19,7 +19,7 @@ def tf_index_select(input_, dim, indices):
     if dim == -1:
         dim = len(shape)-1
     shape[dim] = 1
-
+    
     tmp = []
     for idx in tf.unstack(indices):
         begin = [0]*len(shape)

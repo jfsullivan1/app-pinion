@@ -61,8 +61,7 @@ def train(batch_size):
             batch_losses.append(loss)
             print("Batch Accuracies", batch_accuracies)
             print("Batch Losses", batch_losses)
-            print("EPOCH ACCURACIES", epoch_accuracies)
-            print("EPOCH LOSSES", epoch_losses)
+           
             print("EPOCH %d\tBATCH%d\tACCURACY:%f\tLOSS:%f" %
                   (epoch, batch_index, accuracy, loss))
             if (batch_index + 1) % 200 == 0:
@@ -70,8 +69,18 @@ def train(batch_size):
                 data_manager.set_current_cursor_in_dataframe_zero()
         epoch_accuracies.append(tf.reduce_mean(batch_accuracies))
         epoch_losses.append(tf.reduce_mean(batch_losses))
-    model.save('theModelTrainedOnEmb8.h5')
-       
+        print("EPOCH ACCURACIES", epoch_accuracies)
+        print("EPOCH LOSSES", epoch_losses)
+        file = open('average_accuracies.txt', 'w')
+        file.write("EPOCH: %d" % epoch)
+        file.write("EPOPCH ACCURACY: %d" % epoch_accuracies[epoch])
+        file.close()
+        file = open('losses.txt', 'w')
+        file.write("EPOCH: %d" % epoch)
+        file.write("LOSSES AVG: %d" % epoch_losses[epoch])
+        file.close()
+    
+    model.save_weights('weights')
 
 def eval_batch(logits,x,y,criterion, batch_size):
     '''
