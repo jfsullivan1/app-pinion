@@ -68,13 +68,10 @@ def train(batch_size):
             if (batch_index + 1) % 200 == 0:
 
                 data_manager.set_current_cursor_in_dataframe_zero()
-<<<<<<< HEAD
-
-    model.save('theModelTrainedOnEmb8.h5')
-=======
         epoch_accuracies.append(tf.reduce_mean(batch_accuracies))
-        epoch_losses.append(tf.reduce_mean(batch_losses))           
->>>>>>> 9a90b16d798a16feaa892938e9b236c85283867b
+        epoch_losses.append(tf.reduce_mean(batch_losses))
+    model.save('theModelTrainedOnEmb8.h5')
+       
 
 def eval_batch(logits,x,y,criterion, batch_size):
     '''
