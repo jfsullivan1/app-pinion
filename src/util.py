@@ -27,9 +27,6 @@ else:
 # ROOT_DIR = '.' #the root path, currently is the code execution path
 ROOT_DIR = ''
 
-TRAIN_SET_PATH = '%s../BrexitDataset/BrexitTweets.snstrain_08.wordembbed.csv' % ROOT_DIR
-TEST_SET_PATH = '%s../BrexitDataset/BrexitTweets.snstrain_00.wordembbed.csv' % ROOT_DIR
-
 SAVE_DIR = '%s/save' % ROOT_DIR
 
 WORD_EMBEDDING_DIMENSION = 300  # must set before run
@@ -42,7 +39,7 @@ TWITTER_LENGTH = 24  # universal twitter length for each twitter, must set befor
 USER_SELF_TWEETS = 3  # a user's previous tweet nums, must set before run
 NEIGHBOR_TWEETS = 5  # neighbors' previous tweet nums, must set before run
 TRAINING_INSTANCES = 9216
-TESTING_INSTANCES = 10965
+TESTING_INSTANCES = 9216
 
 # CLASS_COUNT = 3 # number of classes for classification
 TOPIC_SENTIMENT_COUNT = 9
@@ -132,7 +129,7 @@ class DataManager():
         #self.__current_dataframe_of_pandas = tf.data.experimental.make_csv_dataset(param_filepath_in, self.__batch_size).as_dataframe
 
         self.__current_dataframe_of_pandas = pandas.read_pickle(
-            "embedding_new.pkl")
+            "embedding_8.pkl")
         print(self.__current_dataframe_of_pandas.shape)
 
         #self.__current_dataframe_of_pandas = pandas.read_csv( param_filepath_in, dtype = numpy.float32, header = None, encoding = 'utf-8',  sep = ' ' , engine = 'c', usecols=[0,1,2,3])

@@ -56,7 +56,7 @@ def train(batch_size):
             with tf.GradientTape() as tape:
                 logits = model(x)
                 scores, corrects = eval_batch(
-                    logits, x, y, criterion, batch_size)
+                    logits, y, batch_size)
                 loss = criterion(logits, y)
 
             loss = tf.cast(loss, tf.float32)
@@ -78,10 +78,18 @@ def train(batch_size):
                 data_manager.set_current_cursor_in_dataframe_zero()
         epoch_accuracies.append(tf.reduce_mean(batch_accuracies))
         epoch_losses.append(tf.reduce_mean(batch_losses))
-        model.save_weights("model_weights")
+    file = open('average_accuracies.txt', 'a+')
+    file.write("EPOCH: %d" % epoch)
+    file.write("EPOPCH ACCURACY: %d" % epoch_accuracies[epoch])
+    file.close()
+    file = open('losses.txt', 'a+')
+    file.write("EPOCH: %d" % epoch)
+    file.write("LOSSES AVG: %d" % epoch_losses[epoch])
+    file.close()
+    model.save_weights("model_weights")
 
 
-def eval_batch(logits, x, y, criterion, batch_size):
+def eval_batch(logits, y, batch_size):
     '''
     evaluate the logits of each instance, loss, corrects in a batch
     '''
