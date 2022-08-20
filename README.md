@@ -1,6 +1,6 @@
 # app-pinion
 
-CSCI1470 Deep Learning Project: Neural Temporal Modeling for Opinion Prediction on Twitter
+CSCI1470 Deep Learning Project at Brown University, Spring 2022: Neural Temporal Modeling for Opinion Prediction on Twitter
 
 - John Sullivan, jsulli31
 - Troy Conklin, sconkli1
